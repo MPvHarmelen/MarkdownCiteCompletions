@@ -16,7 +16,7 @@ At present, there is one supported method on custom plugins.
     whatever key they like.
 '''
 import sublime
-from .kpsewhich import kpsewhich
+from .latextools_utils.kpsewhich import kpsewhich
 from .latextools_utils import bibformat
 from .latextools_utils.settings import get_setting
 

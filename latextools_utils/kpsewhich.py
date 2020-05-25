@@ -1,7 +1,7 @@
 import sublime
 import traceback
 
-from .latextools_utils.external_command import (
+from .external_command import (
     check_output, CalledProcessError
 )
 
