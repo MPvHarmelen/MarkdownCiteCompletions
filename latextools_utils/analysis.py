@@ -7,20 +7,12 @@ import traceback
 
 import sublime
 
-if sublime.version() < '3000':
-    _ST3 = False
-    from latextools_utils import utils
-    from latextools_utils.cache import LocalCache
-    from external.frozendict import frozendict
-    from latextools_utils.six import strbase
-    from latextools_utils.tex_directives import get_tex_root
-else:
-    _ST3 = True
-    from . import utils
-    from .cache import LocalCache
-    from ..external.frozendict import frozendict
-    from .six import strbase
-    from .tex_directives import get_tex_root
+_ST3 = True
+from . import utils
+from .cache import LocalCache
+from ..external.frozendict import frozendict
+from .six import strbase
+from .tex_directives import get_tex_root
 
 # because we cannot natively pickle sublime.Region in ST2
 # we provide the ability to pickle

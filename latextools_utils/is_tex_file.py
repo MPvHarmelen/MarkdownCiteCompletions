@@ -1,15 +1,6 @@
-import sublime
-import sys
+from .settings import get_setting
 
-try:
-    from latextools_utils import get_setting
-except:
-    from .settings import get_setting
-
-if sys.version_info < (3, 0):
-    strbase = basestring
-else:
-    strbase = str
+strbase = str
 
 def get_tex_extensions():
     tex_file_exts = get_setting('tex_file_exts', ['.tex'])

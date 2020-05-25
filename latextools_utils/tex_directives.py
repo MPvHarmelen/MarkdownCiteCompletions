@@ -7,17 +7,10 @@ import sublime
 import sys
 import traceback
 
-try:
-    from latextools_utils.is_tex_file import is_tex_file
-    from latextools_utils.sublime_utils import get_project_file_name
-except ImportError:
-    from .is_tex_file import is_tex_file
-    from .sublime_utils import get_project_file_name
+from .is_tex_file import is_tex_file
+from .sublime_utils import get_project_file_name
 
-if sys.version_info < (3, 0):
-    strbase = basestring
-else:
-    strbase = str
+strbase = str
 
 TEX_DIRECTIVE = re.compile(
     r'%+\s*!(?:T|t)(?:E|e)(?:X|x)\s+([\w-]+)\s*=\s*' +

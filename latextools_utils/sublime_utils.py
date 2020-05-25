@@ -10,16 +10,9 @@ import re
 import sublime
 import sys
 
-try:
-    from latextools_utils.external_command import (
-        check_output, external_command
-    )
-    from latextools_utils.settings import get_setting
-    from latextools_utils.system import which
-except ImportError:
-    from .external_command import check_output, external_command
-    from .settings import get_setting
-    from .system import which
+from .external_command import check_output, external_command
+from .settings import get_setting
+from .system import which
 
 _ST3 = sublime.version() >= '3000'
 

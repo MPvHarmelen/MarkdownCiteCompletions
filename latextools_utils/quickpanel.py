@@ -23,13 +23,11 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 import sublime
+from .utils import run_after_loading
+
 
 _ST3 = sublime.version() >= '3000'
 
-if _ST3:
-    from .utils import run_after_loading
-else:
-    from latextools_utils.utils import run_after_loading
 
 # positions to add items
 AT_START, AT_END = -1, -2

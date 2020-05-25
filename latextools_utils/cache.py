@@ -15,20 +15,12 @@ except ImportError:
 
 import sublime
 
-if sublime.version() < '3000':
-    _ST3 = False
-    from latextools_utils import get_setting
-    from external.frozendict import frozendict
-    from latextools_utils.six import unicode, long, strbase
-    from latextools_utils.system import make_dirs
-    from latextools_utils.utils import ThreadPool
-else:
-    _ST3 = True
-    from . import get_setting
-    from ..external.frozendict import frozendict
-    from .six import unicode, long, strbase
-    from .system import make_dirs
-    from .utils import ThreadPool
+_ST3 = True
+from . import get_setting
+from ..external.frozendict import frozendict
+from .six import unicode, long, strbase
+from .system import make_dirs
+from .utils import ThreadPool
 
 
 # the folder, if the local cache is not hidden, i.e. folder in the same

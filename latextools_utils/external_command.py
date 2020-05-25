@@ -44,14 +44,9 @@ from shlex import split
 import subprocess
 from subprocess import Popen, PIPE, STDOUT, CalledProcessError
 
-try:
-    from latextools_utils.settings import get_setting
-    from latextools_utils.system import which
-    from latextools_utils.utils import run_on_main_thread
-except ImportError:
-    from .settings import get_setting
-    from .system import which
-    from .utils import run_on_main_thread
+from .settings import get_setting
+from .system import which
+from .utils import run_on_main_thread
 
 if sys.version_info < (3,):
     from pipes import quote

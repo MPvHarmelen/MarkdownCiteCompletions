@@ -20,12 +20,8 @@ try:
 except ImportError:
     from queue import Queue
 
-if sublime.version() < '3000':
-    _ST3 = False
-    from latextools_utils.six import reraise
-else:
-    _ST3 = True
-    from .six import reraise
+_ST3 = True
+from .six import reraise
 
 
 def run_after_loading(view, func):

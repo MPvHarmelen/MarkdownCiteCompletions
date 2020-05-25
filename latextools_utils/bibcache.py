@@ -4,17 +4,11 @@ import traceback
 
 import sublime
 
-if sublime.version() < '3000':
-    _ST3 = False
-    from latextools_utils import bibformat, cache, get_setting
-    from external.frozendict import frozendict
-    from latextools_utils.system import make_dirs
-else:
-    _ST3 = True
-    from . import bibformat, cache, get_setting
-    from ..external.frozendict import frozendict
-    from .six import long
-    from .system import make_dirs
+_ST3 = True
+from . import bibformat, cache, get_setting
+from ..external.frozendict import frozendict
+from .six import long
+from .system import make_dirs
 
 _VERSION = 2
 
