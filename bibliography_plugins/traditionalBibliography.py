@@ -1,7 +1,5 @@
-from latextools_plugin import LaTeXToolsPlugin
-
-from external import latex_chars
-from latextools_utils import bibcache
+from ..external import latex_chars
+from ..latextools_utils import bibcache
 
 import codecs
 import re
@@ -38,7 +36,7 @@ multip = re.compile(
 latex_chars.register()
 
 
-class TraditionalBibliographyPlugin(LaTeXToolsPlugin):
+class TraditionalBibliographyPlugin:
 
     def get_entries(self, *bib_files):
         entries = []

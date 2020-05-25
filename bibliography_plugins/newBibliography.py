@@ -1,18 +1,9 @@
-from latextools_plugin import LaTeXToolsPlugin
+from ..external.bibtex import Parser
+from ..external.bibtex.names import Name
+from ..external.bibtex.tex import tokenize_list
 
-try:
-    from LaTeXTools.external.bibtex import Parser
-    from LaTeXTools.external.bibtex.names import Name
-    from LaTeXTools.external.bibtex.tex import tokenize_list
-
-    from LaTeXTools.external import latex_chars
-except ImportError:
-    from external.bibtex import Parser
-    from external.bibtex.names import Name
-    from external.bibtex.tex import tokenize_list
-
-    from external import latex_chars
-from latextools_utils import bibcache
+from ..external import latex_chars
+from ..latextools_utils import bibcache
 
 import codecs
 from collections import Mapping
@@ -22,12 +13,8 @@ import traceback
 # LaTeX -> Unicode decoder
 latex_chars.register()
 
-if sublime.version() < '3000':
-    def _get_people_long(people):
-        return u' and '.join([unicode(x) for x in people])
-else:
-    def _get_people_long(people):
-        return u' and '.join([str(x) for x in people])
+def _get_people_long(people):
+    return u' and '.join([str(x) for x in people])
 
 def _get_people_short(people):
     if len(people) <= 2:
@@ -115,7 +102,7 @@ class EntryWrapper(Mapping):
         return len(self.entry)
 
 
-class NewBibliographyPlugin(LaTeXToolsPlugin):
+class NewBibliographyPlugin:
 
     def get_entries(self, *bib_files):
         entries = []
