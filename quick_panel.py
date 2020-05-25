@@ -1,3 +1,15 @@
+import re
+import sublime
+import sublime_plugin
+
+from .cite_completion import CitePlugin
+
+
+def getRegion(a, b):
+    return sublime.Region(a, b)
+
+
+class CompleteWithPanelCommand(sublime_plugin.TextCommand):
     '''
     Implements the quick panel for auto-triggered completions and the
     logic to insert brackets as necessary
@@ -22,13 +34,11 @@
         cursor is treated as the prefix, which usually restricts the
         displayed results;
         if true, the current word will be replaced by the selected entry
-
-    :param force:
-        boolean indicating whether or not to match the context or simply
-        insert an entry; if force is true, completion_type must be a string;
-        if force is true, the bracket matching and word overwriting behaviour
-        is disabled
     '''
+
+    COMPLETION_TYPES = {
+        'cite': CitePlugin,
+    }
 
     NON_WORD_CHARACTERS = u'/\\()"\':,.;<>~!@#$%^&*|+=\\[\\]{}`~?\\s'
 
@@ -38,51 +48,21 @@
     )
 
     def run(
-        self, edit, completion_type=None, insert_char="", overwrite=False,
-        force=False
+        self, edit, completion_type='cite', insert_char="", overwrite=False,
+        syntax_selector="text.html.markdown", check_enabled=True,
     ):
         view = self.view
 
         for sel in view.sel():
             point = sel.b
-            if not view.score_selector(point, "text.tex.latex"):
-                self.complete_brackets(view, edit, insert_char)
+            if not view.score_selector(point, syntax_selector):
                 return
 
         # if completion_type is a simple string, try to load it
-        if isinstance(completion_type, strbase):
+        if isinstance(completion_type, str):
             completion_type = self.get_completion_type(completion_type)
             if completion_type is None:
-                if not force:
-                    self.complete_brackets(view, edit, insert_char)
                 return
-        elif force:
-            print('Cannot set `force` if completion type is not specified')
-            return
-
-        if force:
-            insert_char = ''
-            overwrite = False
-
-        # tracks any regions to be removed
-        remove_regions = []
-        prefix = ''
-
-        # handle the _ prefix, if necessary
-        if (
-            not isinstance(completion_type, FillAllHelper) or
-            hasattr(completion_type, 'matches_fancy_prefix')
-        ):
-            fancy_prefix, remove_regions = self.get_common_fancy_prefix(
-                view, view.sel()
-            )
-
-        # if we found a _ prefix, we use the raw line, so \ref_eq
-        fancy_prefixed_line = None
-        if remove_regions:
-            fancy_prefixed_line = view.substr(
-                getRegion(view.line(point).begin(), point)
-            )[::-1]
 
         # normal line calculation
         line = (view.substr(
@@ -92,188 +72,89 @@
         # handle a list of completion types
         if type(completion_type) is list:
             for name in completion_type:
-                try:
-                    ct = self.get_completion_type(name)
-                    if (
-                        fancy_prefixed_line is not None and
-                        hasattr(ct, 'matches_fancy_prefix')
-                    ):
-                        if ct.matches_fancy_prefix(fancy_prefixed_line):
-                            completion_type = ct
-                            prefix = fancy_prefix
-                            break
-                        elif ct.matches_line(line):
-                            completion_type = ct
-                            remove_regions = []
-                            break
-                    elif ct.matches_line(line):
-                        completion_type = ct
-                        remove_regions = []
-                        break
-                except:
-                    pass
+                ct = self.get_completion_type(name)
+                if ct.matches_line(line):
+                    completion_type = ct
+                    break
 
             if type(completion_type) is list:
                 message = "No valid completions found"
                 print(message)
                 sublime.status_message(message)
-                self.complete_brackets(view, edit, insert_char)
                 return
         # unknown completion type
-        elif (
-            completion_type is None or
-            not isinstance(completion_type, FillAllHelper)
-        ):
+        elif completion_type is None:
             for name in self.get_completion_types():
                 ct = self.get_completion_type(name)
                 if ct is None:
                     continue
 
-                if (
-                    fancy_prefixed_line is not None and
-                    hasattr(ct, 'matches_fancy_prefix')
-                ):
-                    if ct.matches_fancy_prefix(fancy_prefixed_line):
-                        completion_type = ct
-                        prefix = fancy_prefix
-                        break
-                    elif ct.matches_line(line):
-                        completion_type = ct
-                        remove_regions = []
-                        break
-                elif ct.matches_line(line):
+                if ct.matches_line(line):
                     completion_type = ct
-                    remove_regions = []
                     break
 
             if (
                 completion_type is None or
-                isinstance(completion_type, strbase)
+                isinstance(completion_type, str)
             ):
                 message = \
                     'Cannot determine completion type for current selection'
                 print(message)
                 sublime.status_message(message)
 
-                self.complete_brackets(view, edit, insert_char)
                 return
-        # assume only a single completion type to use
-        else:
-            # if force is set, we do no matching
-            if not force:
-                if (
-                    fancy_prefixed_line is not None and
-                    hasattr(completion_type, 'matches_fancy_prefix')
-                ):
-                    if completion_type.matches_fancy_prefix(
-                        fancy_prefixed_line
-                    ):
-                        prefix = fancy_prefix
-                    elif completion_type.matches_line(line):
-                        remove_regions = []
-                elif completion_type.matches_line(line):
-                    remove_regions = []
 
         # we only check if the completion type is enabled if we're also
-        # inserting a comma or bracket; otherwise, it must've been a keypress
+        # inserting a character; otherwise, it must've been a keypress
         if insert_char and not completion_type.is_enabled():
-            self.complete_brackets(view, edit, insert_char)
             return
 
-        # we are not adding a bracket or comma, we do not have a fancy prefix
-        # and the overwrite and force options were not set, so calculate the
-        # prefix as the previous word
-        if insert_char == '' and not prefix and not overwrite and not force:
-            prefix = self.get_common_prefix(view, view.sel())
+        # we are not adding a bracket or comma and the overwrite and force
+        # options were not set, so calculate the prefix as the previous word
+        prefix = self.get_common_prefix(view, view.sel()) \
+            if insert_char == '' and not overwrite \
+            else ''
 
-        # reset the _ completions if we are not using them
-        if (
-            insert_char and
-            "fancy_prefix" in locals() and
-            prefix != fancy_prefix
-        ):
-            remove_regions = []
-            prefix = ''
-
-        try:
-            completions = completion_type.get_completions(
-                view, prefix, line[::-1]
-            )
-        except:
-            self.complete_brackets(
-                view, edit, insert_char, remove_regions=remove_regions
-            )
-            reraise(*sys.exc_info())
+        completions = completion_type.get_completions(
+            view, prefix, line[::-1]
+        )
 
         if completions is None:
-            self.complete_brackets(
-                view, edit, insert_char, remove_regions=remove_regions
-            )
             return
         elif type(completions) is tuple:
             formatted_completions, completions = completions
         else:
             formatted_completions = completions
 
-        if len(completions) == 0:
-            self.complete_brackets(
-                view, edit, insert_char, remove_regions=remove_regions
-            )
-        elif len(completions) == 1:
+        if len(completions) == 1:
             # if there is only one completion and it already matches the
             # current text
-            if force:
-                view.insert(edit, completions[0])
+
+            if completions[0] == prefix:
                 return
-            else:
-                if completions[0] == prefix:
-                    return
 
-                if insert_char:
-                    insert_text = (
-                        insert_char + completions[0]
-                        if completions[0] else insert_char
-                    )
-                    self.insert_at_end(view, edit, insert_text)
-                elif completions[0]:
-                    self.replace_word(view, edit, completions[0])
-
-                self.complete_auto_match(view, edit, insert_char)
-                self.remove_regions(view, edit, remove_regions)
-            self.clear_bracket_cache()
+            if insert_char:
+                insert_text = (
+                    insert_char + completions[0]
+                    if completions[0] else insert_char
+                )
+                self.insert_at_end(view, edit, insert_text)
+            elif completions[0]:
+                self.replace_word(view, edit, completions[0])
         else:
             def on_done(i):
                 if i < 0:
-                    view.run_command(
-                        'latex_tools_fill_all_complete_bracket',
-                        {
-                            'insert_char': insert_char,
-                            'remove_regions':
-                                self.regions_to_tuples(remove_regions)
-                        }
-                    )
                     return
 
-                if force:
-                    view.run_command(
-                        'insert',
-                        {
-                            'characters': completions[i]
-                        }
-                    )
-                else:
-                    view.run_command(
-                        'latex_tools_replace_word',
-                        {
-                            'insert_char': insert_char,
-                            'replacement': completions[i],
-                            'remove_regions':
-                                self.regions_to_tuples(remove_regions)
-                        }
-                    )
+                view.run_command(
+                    'latex_tools_replace_word',
+                    {
+                        'insert_char': insert_char,
+                        'replacement': completions[i],
+                    }
+                )
 
             view.window().show_quick_panel(formatted_completions, on_done)
-            self.clear_bracket_cache()
 
     def get_common_prefix(self, view, locations):
         '''
@@ -285,7 +166,7 @@
         :param locations:
             either a list of points or a list of sublime.Regions
         '''
-        if type(locations[0]) is int or type(locations[0]) is long:
+        if type(locations[0]) is int:
             locations = [getRegion(l, l) for l in locations]
 
         old_prefix = None
@@ -348,15 +229,11 @@
 
     def get_completion_types(self):
         '''
-        Gets the list of plugin names
+        Get an iterable of plugin names
         '''
-        if self.COMPLETION_TYPES is None:
-            self._load_plugins()
-        return self.COMPLETION_TYPE_NAMES
+        return self.COMPLETION_TYPES.keys()
 
     def get_completion_type(self, name):
-        if self.COMPLETION_TYPES is None:
-            self._load_plugins()
         return self.COMPLETION_TYPES.get(name)
 
     def insert_at_end(self, view, edit, value):
