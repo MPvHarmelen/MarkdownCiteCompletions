@@ -1,0 +1,11 @@
+[
+    { "keys": ["alt+m"], "command": "complete_with_panel"},
+    { "keys": ["@"],
+        "context":  [
+            {"key": "selector", "operator": "equal", "operand": "text.html.markdown"},
+            {"key": "selection_empty", "operator": "equal", "operand": true, "match_all": true},
+        ],
+        "command": "complete_with_panel", "args": {"completion_type": "cite", "insert_char": "@"}
+    },
+
+]
