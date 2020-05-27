@@ -16,7 +16,7 @@ except ImportError:
 import sublime
 
 _ST3 = True
-from . import get_setting
+from .settings import get_setting
 from ..external.frozendict import frozendict
 from .six import unicode, long, strbase
 from .system import make_dirs

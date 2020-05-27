@@ -2,10 +2,8 @@ import os
 import time
 import traceback
 
-import sublime
-
-_ST3 = True
-from . import bibformat, cache, get_setting
+from . import bibformat, cache
+from .settings import get_setting
 from ..external.frozendict import frozendict
 from .six import long
 from .system import make_dirs

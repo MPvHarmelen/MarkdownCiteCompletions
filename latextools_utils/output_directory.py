@@ -4,7 +4,7 @@ import os
 import sublime
 import tempfile
 
-from . import get_setting
+from .settings import get_setting
 from .distro_utils import using_miktex
 from .tex_directives import get_tex_root, parse_tex_directives
 from .sublime_utils import get_project_file_name
