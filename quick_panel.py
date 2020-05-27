@@ -48,10 +48,13 @@ class CompleteWithPanelCommand(sublime_plugin.TextCommand):
     )
 
     def run(
-        self, edit, completion_type='cite', insert_char="", overwrite=False,
+        self, edit, completion_type='cite', insert_char=None, overwrite=False,
         syntax_selector="text.html.markdown", check_enabled=True,
     ):
         view = self.view
+
+        if insert_char is not None:
+            self.insert_at_end(view, edit, insert_char)
 
         for sel in view.sel():
             point = sel.b
@@ -135,7 +138,7 @@ class CompleteWithPanelCommand(sublime_plugin.TextCommand):
 
             if insert_char:
                 insert_text = (
-                    insert_char + completions[0]
+                    completions[0]
                     if completions[0] else insert_char
                 )
                 self.insert_at_end(view, edit, insert_text)
@@ -149,7 +152,7 @@ class CompleteWithPanelCommand(sublime_plugin.TextCommand):
                 view.run_command(
                     'latex_tools_replace_word',
                     {
-                        'insert_char': insert_char,
+                        # 'insert_char': insert_char,
                         'replacement': completions[i],
                     }
                 )
